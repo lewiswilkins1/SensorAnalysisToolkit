@@ -173,7 +173,7 @@ int main(int argc, const char** argv){
 	double loops, dec, newframenumber;
 	newframenumber=numOfFrames;
 	dec = modf(newframenumber/100, &loops);
-
+	std::cout<<"loops: "<<loops<<" "<<newframenumber<<std::endl;
 	if( dec == 0 ){
 		NumOfImageStacks = loops;
 	}
@@ -187,11 +187,11 @@ int main(int argc, const char** argv){
 
 	int darkFlag(0);
 	for ( int iter = 0; iter<NumOfImageStacks;iter++){
-
+		std::cout<<"iter: "<<iter<<std::endl;
 		if (iter==loops)
 		{
 
-
+			std::cout<<"Iter is equal to loops"<<std::endl;
 
 			myImageStack->Initialise( myIO.ReadImageStack( filePath, fileNameAndFormat, iter*100, (100*dec), framesize ), 100*dec	, rows, cols );
 			//Calculating the number of dark frames in front of the data.
@@ -200,7 +200,8 @@ int main(int argc, const char** argv){
 			float darkFramesAfter=0;
 
 
-
+			std::cout<<"Starting first loop"<<std::endl;
+			std::cout<<myImageStack->NumberOfImageInStack()<<std::endl;
 			int iFrames=0;
 			do {
 				float tempPix=0;
@@ -209,16 +210,17 @@ int main(int argc, const char** argv){
 					tempPix+=myImageStack->GetPixelAt(iFrames*framesize+iElements);
 				}
 				tempPix=tempPix/framesize;
-
+				std::cout<<"done first bit"<<std::endl;
 				if	(tempPix>(pedAvg+200))
 				{
 
 						darkFrames=iFrames;
 				}
-
+				iFrames++;
+				std::cout<<darkFrames<<" "<<darkFlag<<std::endl;
 			}while(darkFrames==0&&iFrames<myImageStack->NumberOfImageInStack()&&darkFlag!=1);
 
-
+			std::cout<<" Before dark done"<<std::endl;
 
 			//Calculating the number of dark frames after the data.
 			iFrames=darkFrames;
