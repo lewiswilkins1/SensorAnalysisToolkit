@@ -44,8 +44,8 @@ public:
 	 * @par[in] rawImage The input image to be corrected.
 	 * @par[in] gainImage Image containing gain values for each pixel.
 	 */
-	template< typename T_PixelInputType, typename T_PixelOutputType>
-	void CorrectImage(std::shared_ptr<stk::ImageStack<T_PixelInputType> > lightStack, std::shared_ptr<stk::Image<T_PixelOutputType> > pedImage, std::shared_ptr<stk::Image<T_PixelOutputType> > rawImage, std::shared_ptr<stk::Image<T_PixelOutputType> > gainImage);
+	template<typename T_PixelOutputType>
+	void CorrectImage(std::shared_ptr<stk::Image<T_PixelOutputType> > lightImage, std::shared_ptr<stk::Image<T_PixelOutputType> > pedImage, std::shared_ptr<stk::Image<T_PixelOutputType> > rawImage, std::shared_ptr<stk::Image<T_PixelOutputType> > gainImage);
 };
 
 

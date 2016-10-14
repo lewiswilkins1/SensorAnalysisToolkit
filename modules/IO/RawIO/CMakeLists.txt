@@ -1,6 +1,6 @@
 #CMakeList for src dir
 
-
+cmake_minimum_required(VERSION 2.8.8)
 #Add source headers
 set(SOURCE_FILES include/stkRawImageIO.hxx)
 #Add headers

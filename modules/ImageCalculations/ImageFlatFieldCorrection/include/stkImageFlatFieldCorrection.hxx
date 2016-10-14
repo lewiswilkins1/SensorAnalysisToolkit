@@ -20,39 +20,20 @@ namespace stk{
 ImageFlatFieldCorrection::ImageFlatFieldCorrection(){}
 ImageFlatFieldCorrection::~ImageFlatFieldCorrection(){}
 
-template< typename T_PixelInputType, typename T_PixelOutputType>
-void ImageFlatFieldCorrection::CorrectImage(std::shared_ptr<stk::ImageStack<T_PixelInputType> > lightStack, std::shared_ptr<stk::Image<T_PixelOutputType> > pedImage, std::shared_ptr<stk::Image<T_PixelOutputType> > rawImage, std::shared_ptr<stk::Image<T_PixelOutputType> > gainImage){
-
-
-
+template<typename T_PixelOutputType>
+void ImageFlatFieldCorrection::CorrectImage(std::shared_ptr<stk::Image<T_PixelOutputType> > lightImage, std::shared_ptr<stk::Image<T_PixelOutputType> > pedImage, std::shared_ptr<stk::Image<T_PixelOutputType> > rawImage, std::shared_ptr<stk::Image<T_PixelOutputType> > gainImage){
 	/*
-	 * Prepare the light image
-	 */
-	std::shared_ptr< stk::Image<float> > lightImage ( new stk::Image<float>(4096,4096) );
-
-	stk::ImageSum summer;
-	stk::ImageDivision divider;
-	T_PixelOutputType num = lightStack->NumberOfImageInStack();
-	summer.SumImageStack(lightStack, lightImage);
-
-	divider.DivideImage(lightImage, static_cast<float>(lightStack->NumberOfImageInStack()) );
-
-	/*s
 	 * Calculating m
 	 */
 
 	stk::ImageMinus subtracter;
-
-
 	subtracter.MinusImage(lightImage, pedImage);
 	T_PixelOutputType tempPixel=0;
 
 	for(int iElements=0; iElements<lightImage->NumberOfPixels(); iElements++)
 	{
 			tempPixel = tempPixel + lightImage->GetPixelAt(iElements);
-
 	}
-
 
 	T_PixelOutputType m = tempPixel/(lightImage->NumberOfPixels());
 
@@ -74,13 +55,8 @@ void ImageFlatFieldCorrection::CorrectImage(std::shared_ptr<stk::ImageStack<T_Pi
 			else{
 				gainImage->SetPixelAt(iElements, tempgain);
 			}
-
-
-
 		}
 	});
-
-
 
 	/*
 	 * Calculaete corrected Image
@@ -91,13 +67,6 @@ void ImageFlatFieldCorrection::CorrectImage(std::shared_ptr<stk::ImageStack<T_Pi
 	typename std::vector<T_PixelOutputType>::iterator itLastPixel =  rawImage->EndImage(); //set to end of image
 	typename std::vector<T_PixelOutputType>::iterator itPixel  = gainImage->StartImage();
 	std::transform(itFirstPixel, itLastPixel, itPixel, itFirstPixel, std::multiplies<T_PixelOutputType>());//Multiplies each pixel by itself using the transform method.
-
-
-
-
-
-
-
 }
 }
 

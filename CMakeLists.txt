@@ -6,6 +6,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} /software/root/root-6.04.00/cmake/mod
 project (SensorAnalysisToolKit)
 
 set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin )
-set( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib )
+set( CMAKE_LIBRARY_OUTPUT_DIRECTORY $ENV{HOME}/SensorAnalysisToolKit_Eclipse/lib )
 
 add_subdirectory ($ENV{HOME}/SensorAnalysisToolKit/modules)
+

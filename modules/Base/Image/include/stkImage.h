@@ -115,6 +115,9 @@ public:
 	 */
 	inline void SetPixelAt(const int &row, const int &col, const T_PixelType &value){ m_buffer->at( (m_col*row+col) )=value;};
 
+	void Resize();
+
+	void Delete();
 private:
    std::shared_ptr< std::vector<T_PixelType> > m_buffer;/*< A pointer to the vector containing the pixel data */
    int m_row;/*< The number of rows in the image */

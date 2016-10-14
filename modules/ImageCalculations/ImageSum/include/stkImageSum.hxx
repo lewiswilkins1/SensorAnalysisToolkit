@@ -20,18 +20,7 @@ ImageSum::ImageSum(){}
 
 ImageSum::~ImageSum(){}
 
-//template <typename T_Pixeldata>
-//void ImageSum<T_Pixeldata>::SumImageStack( const std::shared_ptr< stk::ImageStack<T_Pixeldata> > imageStack, std::shared_ptr < stk::Image<T_Pixeldata> > result ){
-//
-//	for(int iFrames=0; iFrames < imageStack->NumberOfImageInStack(); iFrames++ ){//loop over all the frames in the stack
-//		for( int iElements=0; iElements < result->NumberOfPixels(); iElements++ ){//loop over all the pixels in the result
-//			T_Pixeldata tempPixel = imageStack->GetPixelAt( ((iFrames*result->NumberOfPixels()) + iElements) ); //get stack value
-//			tempPixel += result->GetPixelAt( iElements ); //Add to this the element of the element
-//			result->SetPixelAt( iElements, tempPixel );//update the image value
-//
-//		}
-//	}
-//}
+
 
 template< typename T_PixelInputType, typename T_PixelOutputType>
 void ImageSum::SumImageStack( const std::shared_ptr< stk::ImageStack<T_PixelInputType> > imageStack, std::shared_ptr < stk::Image<T_PixelOutputType> > result ){
@@ -50,6 +39,24 @@ void ImageSum::SumImageStack( const std::shared_ptr< stk::ImageStack<T_PixelInpu
 		//std::cout<<iFrames<<std::endl;
 	}
 }
+
+template< typename T_PixelInputType, typename T_PixelOutputType>
+	void ImageSum::SumImageStack( const std::shared_ptr< stk::ImageStack<T_PixelInputType> > imageStack, std::shared_ptr < stk::Image<T_PixelOutputType> > result, const int &darkFrames, const int &darkFramesAfter ){
+
+	for(int iFrames=darkFrames; iFrames<darkFramesAfter; iFrames++)
+			{
+
+		for(int iElements=0; iElements<result->NumberOfPixels();iElements++){
+			T_PixelOutputType temp(0);
+			temp = imageStack->GetPixelAt(iFrames*result->NumberOfPixels()+iElements)+result->GetPixelAt(iElements);
+
+
+			result->SetPixelAt(iElements,temp );
+		}
+
+			}
+}
+
 
 }
 #endif /* __stkImageSum_hxx */

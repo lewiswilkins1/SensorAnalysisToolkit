@@ -35,6 +35,55 @@ void Image<T_PixelType>::Initialise( const std::shared_ptr< std::vector<T_PixelT
 	m_col = col;
 }
 
+template<typename T_PixelType>
+void Image<T_PixelType>::Resize(){
+
+	int pix=0;
+	for(int iElements=0; iElements<(m_row*m_col-4);iElements+=4)
+	{
+		T_PixelType tempPixel=0;
+		T_PixelType count=0;
+
+
+		for(int iKernel=iElements; iKernel<(iElements+(4*m_row));iKernel++){
+
+
+			tempPixel += m_buffer->at(iKernel);
+			count++;
+
+			if(count==4)
+			{
+				iKernel=iKernel+(m_row-4);
+				count=0;
+
+			}
+
+		}
+
+
+		m_buffer->at(pix)=tempPixel/16;
+		pix++;
+		if((iElements+4)%m_row==0)
+		{
+			iElements+=(3*m_row);
+
+		}
+	}
+	m_row = 1024;
+	m_col = 1024;
+
+	m_buffer->resize(m_row*m_col);
+	m_buffer->shrink_to_fit();
+
 }
+template<typename T_PixelType>
+void Image<T_PixelType>::Delete(){
+	std::cout<<m_buffer->capacity()<<std::endl;
+	m_buffer->clear();
+	m_buffer->shrink_to_fit();
+	std::cout<<m_buffer->capacity()<<std::endl;
+}
+}
+
 
 #endif /* __stkImage_hxx */

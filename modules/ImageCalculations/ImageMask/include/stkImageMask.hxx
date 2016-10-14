@@ -134,7 +134,7 @@ for(int iElements=0; iElements<varianceImage->NumberOfPixels(); iElements++)
 			T_PixelOutputType tempPedPixel = pedImage->GetPixelAt( iElements );
 
 
-				if(tempPixel>threshup||tempPixel<threshdown||tempPedPixel>pedThreshUp||tempPedPixel<pedThreshDown||gainMap->GetPixelAt(iElements)==0){
+				if(tempPixel>threshup||tempPixel<threshdown||tempPedPixel>pedThreshUp||tempPedPixel<pedThreshDown/*||gainMap->GetPixelAt(iElements)==0*/){
 
 						maskingImage->SetPixelAt( iElements,true);
 						count++;

@@ -37,15 +37,16 @@
 #include "stkImageMinus.h"
 #include "stkImageResize.h"
 #include "stkImageFlatFieldCorrection.h"
+#include "stkDarkFrameDetection.h"
 
 
 int main(int argc, const char** argv){
 
 
 
-	if(argc != 16 )
+	if(argc != 18 )
 	{
-		std::cout<<"Usage: BadPixelRemoval [PEDFILEPATH] [PEDFILENAMEANDFORMAT] [LIGHTFILEPATH] [LIGHTFILENAMEANDFORMAT] [RAWFILEPATH] [RAWFILENAMEANDFORMAT] [OUTPUTFILENAMEANDPATH]  [ROWS] [COLS] [PEDSTARTINGFRAME] [PEDNUMBEROFFILES] [LIGHTSTARTINGFRAME] [LIGHTNUMBEROFFILES] [RAWSTARTINGFRAME] [RAWNUMBEROFFILES]"<<std::endl;
+		std::cout<<"Usage: BasicImageProcessing [PEDFILEPATH] [PEDFILENAMEANDFORMAT] [LIGHTFILEPATH] [LIGHTFILENAMEANDFORMAT] [RAWFILEPATH] [RAWFILENAMEANDFORMAT] [OUTPUTFILENAMEANDPATH]  [ROWS] [COLS] [PEDSTARTINGFRAME] [PEDNUMBEROFFILES] [LIGHTSTARTINGFRAME] [LIGHTNUMBEROFFILES] [RAWSTARTINGFRAME] [RAWNUMBEROFFILES]"<<std::endl;
 		std::cout<<"Only 16 bit is supported in this example"<<std::endl;
 		return 0;
 	}
@@ -54,7 +55,7 @@ int main(int argc, const char** argv){
 
 	//Variables to hold the input parameters
 
-	std::string pedfilePath, pedfileNameAndFormat, lightfilePath, lightfileNameAndFormat, filePath, fileNameAndFormat, outFileNameAndPath;
+	std::string pedfilePath, pedfileNameAndFormat, lightfilePath, lightfileNameAndFormat, filePath, outFileNameAndPath, fileNameAndFormat, outFilePath, outFileName, outFileExtension;
 	int startingframe, numOfFrames, rows, cols, framesize, pedStartingframe, pedNumOfFrames, lightStartingframe, lightNumOfFrames;
 
 
@@ -64,10 +65,13 @@ int main(int argc, const char** argv){
 		inputs << argv[iArg] << ' ';//get the arguments
 	}
 
-	inputs >> pedfilePath >> pedfileNameAndFormat  >> lightfilePath >> lightfileNameAndFormat >> filePath >> fileNameAndFormat >> outFileNameAndPath >> rows >> cols >> pedStartingframe >> pedNumOfFrames >> lightStartingframe >> lightNumOfFrames >> startingframe >> numOfFrames;//write the inputs
+	inputs >> pedfilePath >> pedfileNameAndFormat  >> lightfilePath >> lightfileNameAndFormat >> filePath >> fileNameAndFormat >> outFilePath >> outFileName >> outFileExtension >>  rows >> cols >> pedStartingframe >> pedNumOfFrames >> lightStartingframe >> lightNumOfFrames >> startingframe >> numOfFrames;//write the inputs
 	framesize = cols*rows;
+	//outFileNameAndPath = outFilePath+outFileName+outFileExtension;
 
 	std::cout<<"Input Works"<<std::endl;
+	outFileNameAndPath = outFilePath+outFileName+outFileExtension;
+	std::cout<<outFileNameAndPath<<std::endl;
 	//Load ped image stack
 	stk::IOImageStack<unsigned short> mypedIO;
 	std::shared_ptr< stk::ImageStack<unsigned short> > myPedImageStack( new stk::ImageStack<unsigned short> );
@@ -117,6 +121,8 @@ int main(int argc, const char** argv){
 	//FieldCorrecter
 	stk::ImageFlatFieldCorrection myField;
 
+	stk::DarkFrameDetection darkFrameDetect;
+
 
 	/*
 	 * Image initialising
@@ -139,6 +145,9 @@ int main(int argc, const char** argv){
 
 	//Image to hold resized result
 	std::shared_ptr<stk::Image<float> > myResultResize (new stk::Image<float>(1024,1024));
+
+	//Image to hold resized result
+	std::shared_ptr<stk::Image<float> > myLightImage (new stk::Image<float>(1024,1024));
 
 
 
@@ -169,161 +178,12 @@ int main(int argc, const char** argv){
 		pedVar+= (myPedestal->GetPixelAt(iElements)-pedAvg)*(myPedestal->GetPixelAt(iElements)-pedAvg);
 	}
 	pedVar=std::sqrt(pedVar/framesize);
-	int NumOfImageStacks;
-	double loops, dec, newframenumber;
-	newframenumber=numOfFrames;
-	dec = modf(newframenumber/100, &loops);
-	std::cout<<"loops: "<<loops<<" "<<newframenumber<<std::endl;
-	if( dec == 0 ){
-		NumOfImageStacks = loops;
-	}
-	else{
-		NumOfImageStacks = loops +1;
-	}
-
-	std::shared_ptr< stk::ImageStack<unsigned short> > myImageStack( new stk::ImageStack<unsigned short> );
-	stk::IOImageStack<unsigned short> myIO;
-
-
-	int darkFlag(0);
-	for ( int iter = 0; iter<NumOfImageStacks;iter++){
-		std::cout<<"iter: "<<iter<<std::endl;
-		if (iter==loops)
-		{
-
-			std::cout<<"Iter is equal to loops"<<std::endl;
-
-			myImageStack->Initialise( myIO.ReadImageStack( filePath, fileNameAndFormat, iter*100, (100*dec), framesize ), 100*dec	, rows, cols );
-			//Calculating the number of dark frames in front of the data.
-
-			float darkFrames=0;
-			float darkFramesAfter=0;
-
-
-			std::cout<<"Starting first loop"<<std::endl;
-			std::cout<<myImageStack->NumberOfImageInStack()<<std::endl;
-			int iFrames=0;
-			do {
-				float tempPix=0;
-				for(int iElements=0; iElements<framesize;iElements++)
-				{
-					tempPix+=myImageStack->GetPixelAt(iFrames*framesize+iElements);
-				}
-				tempPix=tempPix/framesize;
-				std::cout<<"done first bit"<<std::endl;
-				if	(tempPix>(pedAvg+200))
-				{
-
-						darkFrames=iFrames;
-				}
-				iFrames++;
-				std::cout<<darkFrames<<" "<<darkFlag<<std::endl;
-			}while(darkFrames==0&&iFrames<myImageStack->NumberOfImageInStack()&&darkFlag!=1);
-
-			std::cout<<" Before dark done"<<std::endl;
-
-			//Calculating the number of dark frames after the data.
-			iFrames=darkFrames;
-			do {
-				float tempPix=0;
-				for(int iElements=0; iElements<framesize;iElements++)
-				{
-					tempPix+=myImageStack->GetPixelAt(iFrames*framesize+iElements);
-				}
-				tempPix=tempPix/framesize;
-
-				if	(tempPix<(pedAvg+200))
-				{
-					darkFramesAfter=iFrames;
-
-				}
-
-				iFrames++;
-
-			}while(darkFramesAfter==0&&iFrames<myImageStack->NumberOfImageInStack());
-			if(darkFramesAfter==0){
-							darkFramesAfter=dec*100;
-						}
-			std::cout<<"Dark frames excluded."<<std::endl;
-			std::cout<<darkFrames<<" "<<darkFramesAfter<<std::endl;
-			//Remove pedestal from raw stack, sum stack into image.
-			//
-			myMinus.MinusImage(myImageStack, myPedestal, myResult, darkFrames, darkFramesAfter);
-			//myDivider.DivideImage(myResult, static_cast<float>(darkFramesAfter-darkFrames) );
-			//
-
-		}
-		else
-		{
-
-
-			//stk::IOImageStack<unsigned short> myIO;
-			//std::shared_ptr< stk::ImageStack<unsigned short> > myImageStack( new stk::ImageStack<unsigned short> );
-			myImageStack->Initialise( myIO.ReadImageStack( filePath, fileNameAndFormat, iter*100, (100), framesize ), 100, rows, cols );
-			//Calculating the number of dark frames in front of the data.
-
-			float darkFrames=0;
-			float darkFramesAfter=0;
-
-
-			int iFrames=0;
-			do {
-				float tempPix=0;
-				for(int iElements=0; iElements<framesize;iElements++)
-				{
-					tempPix+=myImageStack->GetPixelAt(iFrames*framesize+iElements);
-				}
-				tempPix=tempPix/framesize;
-
-				if	(tempPix>(pedAvg+200))
-				{
-
-					darkFrames=iFrames;
-					darkFlag=1;
-				}
-				iFrames++;
-
-			}while(darkFrames==0&&iFrames<myImageStack->NumberOfImageInStack()&&darkFlag!=1);
 
 
 
-			//Calculating the number of dark frames after the data.
-			iFrames=darkFrames;
-			do {
-				float tempPix=0;
-				for(int iElements=0; iElements<framesize;iElements++)
-				{
-					tempPix+=myImageStack->GetPixelAt(iFrames*framesize+iElements);
-				}
-				tempPix=tempPix/framesize;
+	darkFrameDetect.DetectDarkFrames(myResult ,myPedestal, pedAvg,filePath, fileNameAndFormat, rows, cols, numOfFrames, startingframe  );
 
-				if	(tempPix<(pedAvg+200))
-				{
-					darkFramesAfter=iFrames;
-				}
-
-				iFrames++;
-
-
-			}while(darkFramesAfter==0&&iFrames<myImageStack->NumberOfImageInStack());
-			if(darkFramesAfter==0){
-				darkFramesAfter=100;
-			}
-			//std::cout<<darkFrames<<" "<<darkFramesAfter<<std::endl;
-			//std::cout<<"Dark frames excluded."<<std::endl;
-			//Remove pedestal from raw stack, sum stack into image.
-			myMinus.MinusImage(myImageStack, myPedestal, myResult, darkFrames, darkFramesAfter);
-			//myDivider.DivideImage(myResult, static_cast<float>(darkFramesAfter-darkFrames) );
-		}
-
-	}
-
-//float temp=0;
-//	for(int iElements = 0; iElements<myResult->NumberOfPixels();iElements++){
-//		temp+= myResult->GetPixelAt(iElements);
-//		//std::cout<<myResult->GetPixelAt(iElements)<<std::endl;
-//	}
-////std::cout<<temp<<std::endl;
+	//std::cout<<myResult->GetPixelAt(9454)<<std::endl;
 	//Variance calculation
 
 	std::cout<<"Ped of Pixel 0: "<<myPedestal->GetPixelAt(0)<<std::endl;
@@ -353,8 +213,16 @@ int main(int argc, const char** argv){
 
 	std::cout<<"Images integrated."<<std::endl;
 
-	//Flat field correction
-	myField.CorrectImage(mylightStack, myPedestal, myResult, myGain);
+
+
+	//	int framesUsed(0);
+	//	darkFrameDetect.DetectDarkFrames(myLightImage, pedAvg, lightfilePath, lightfileNameAndFormat, rows, cols, numOfFrames, lightStartingframe, framesUsed );
+	//	myDivider.DivideImage(myLightImage, static_cast<float>(framesUsed));
+	//
+	//
+	//
+	//	//Flat field correction
+	//	myField.CorrectImage(myLightImage, myPedestal, myResult, myGain);
 
 	std::cout<<"Cut values Ped: "<<pedAvg<<" Var: "<<varVar<<std::endl;
 
@@ -365,11 +233,19 @@ int main(int argc, const char** argv){
 	myAverage.BadPixelAverage(myResult, myMaskImage);
 
 	std::cout<<"Bad pixels removed."<<std::endl;
+
+
+
 	//Image resizing
 	mySize.ResizeImage(myResult , myResultResize);
 
 	stk::IO<float> imageIO;
 	imageIO.WriteImage( myResult, outFileNameAndPath );
+
+
+
+
+
 
 	stk::ImageHistogram<TH2F, float> myImageHistogram;
 	myImageHistogram.SetTitle(fileNameAndFormat);
@@ -385,11 +261,73 @@ int main(int argc, const char** argv){
 	myImageHistogram.SetGridX(false);
 
 	myImageHistogram.SetStatBoxOptions(0);
-	myImageHistogram.SetOutputFileNameAndPath(outFileNameAndPath);
+	myImageHistogram.SetOutputFileNameAndPath(outFilePath+outFileName);
 	myImageHistogram.SetOutputFileType( stk::FileType::PNG );
 
-	myImageHistogram.Generate2DHistogram( myResultResize);
+	myImageHistogram.Generate2DHistogram( myResultResize, "Map");
 	myImageHistogram.SaveHistogram();
+
+
+
+
+	stk::ImageHistogram<TH2F, float> myImageHistogramX;
+
+	myImageHistogramX.SetYAxisTitle("ADC");
+	myImageHistogramX.SetYAxisLog(false);
+	myImageHistogramX.SetNumberOfYBins(1024);
+	myImageHistogramX.SetYLimits( -0.5, 1023.5 );
+	myImageHistogramX.SetXAxisTitle( "Row" );
+	myImageHistogramX.SetNumberOfXBins( 1024);
+	myImageHistogramX.SetXLimits(  -0.5, 1023.5  );
+
+	myImageHistogramX.SetGridY(false);
+	myImageHistogramX.SetGridX(false);
+
+	myImageHistogramX.SetStatBoxOptions(0);
+
+
+
+	std::string xEnd = "X";
+	std::string histTitleX = outFileName+"_"+xEnd;
+	outFilePath.append(outFileName+"_");
+	outFilePath.append(xEnd);
+
+	myImageHistogramX.SetOutputFileNameAndPath(outFilePath);
+	myImageHistogramX.SetTitle(histTitleX);
+	outFilePath.pop_back();
+	myImageHistogramX.SetOutputFileType( stk::FileType::PNG );
+
+	myImageHistogramX.Generate2DHistogram( myResultResize, "X Slice");
+	myImageHistogramX.GenerateXSlice(512);
+	myImageHistogramX.SaveHistogram();
+
+
+
+	stk::ImageHistogram<TH2F, float> myImageHistogramY;
+
+	myImageHistogramY.SetYAxisTitle("ADC");
+	myImageHistogramY.SetYAxisLog(false);
+	myImageHistogramY.SetNumberOfYBins(1024);
+	myImageHistogramY.SetYLimits( -0.5, 1023.5 );
+	myImageHistogramY.SetXAxisTitle( "Col" );
+	myImageHistogramY.SetNumberOfXBins( 1024);
+	myImageHistogramY.SetXLimits(  -0.5, 1023.5  );
+
+	myImageHistogramY.SetGridY(false);
+	myImageHistogramY.SetGridX(false);
+
+	std::string yEnd = "Y";
+	myImageHistogramY.SetStatBoxOptions(0);
+	std::string histTitleY = outFileName+"_"+yEnd;
+
+
+	myImageHistogramY.SetTitle(histTitleY);
+	myImageHistogramY.SetOutputFileNameAndPath(outFilePath.append(yEnd));
+	myImageHistogramY.SetOutputFileType( stk::FileType::PNG );
+
+	myImageHistogramY.Generate2DHistogram( myResultResize, "Y Slice");
+	myImageHistogramY.GenerateYSlice(512);
+	myImageHistogramY.SaveHistogram();
 
 
 	return 1;

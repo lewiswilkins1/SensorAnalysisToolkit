@@ -40,7 +40,7 @@ std::shared_ptr< std::vector<T_datatype> > IOImageStack<T_datatype>::ReadImageSt
 		//
 		if(iFrame != 0) bufferIterator = frameMemory->begin() + m_frameSize*iFrame;//move the buffer iterator after each loop
 		//get file name
-		char* nextFile= new char[50];
+		char* nextFile= new char[150];
 		std::sprintf( nextFile, fileNameAndFormat.c_str(), iFrame+startingFrame); //read in the new file name
 		std::string fullNameAndPath = filePath + nextFile; // update the full path and file name
 		//

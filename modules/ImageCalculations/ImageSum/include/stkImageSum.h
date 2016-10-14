@@ -40,8 +40,15 @@ public:
 	 */
 	template< typename T_PixelInputType, typename T_PixelOutputType>
 	void SumImageStack( const std::shared_ptr< stk::ImageStack<T_PixelInputType> > imageStack, std::shared_ptr < stk::Image<T_PixelOutputType> > result );
-};
 
+	template< typename T_PixelInputType, typename T_PixelOutputType>
+	void SumImageStack( const std::shared_ptr< stk::ImageStack<T_PixelInputType> > imageStack, std::shared_ptr < stk::Image<T_PixelOutputType> > result, const int &darkFrames, const int &darkFramesAfter );
+
+
+
+
+
+};
 }
 #include "stkImageSum.hxx"
 

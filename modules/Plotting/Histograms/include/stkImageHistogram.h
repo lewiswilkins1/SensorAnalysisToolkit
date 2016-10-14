@@ -13,8 +13,11 @@
 #include <string>
 #include <iostream>
 #include <memory>
-
+#include <cmath>
 #include "stkImage.h"
+#include "TH1.h"
+#include "TH2.h"
+#include "TFile.h"
 
 namespace stk{
 
@@ -89,14 +92,29 @@ public:
 		return histogram.m_HistSetup.PrintSettings(osObject); //just one line!
 	};
 
-	void GenerateHistogram( const std::shared_ptr< stk::Image<T_Pixeltype> >  imageToHistogram );
-	void Generate2DHistogram( const std::shared_ptr< stk::Image<T_Pixeltype> >  imageToHistogram );
+	void GenerateHistogram( const std::shared_ptr< stk::Image<T_Pixeltype> >  imageToHistogram, const std::string &histName );
+	void Generate2DHistogram( const std::shared_ptr< stk::Image<T_Pixeltype> >  imageToHistogram, const std::string histName );
+	void Generate2DHistogramForSlice( const std::shared_ptr< stk::Image<T_Pixeltype> >  imageToHistogram , const std::shared_ptr< stk::Image<T_Pixeltype> >  image2ToHistogram);
+	void GenerateXSlice(const int &bin);
+	void GenerateYSlice(const int &bin);
+	void GenerateXSlice(const int &bin, const int &end);
+	void GenerateYSlice(const int &bin, const int &end);
+
+	Double_t fitf(Double_t *x, Double_t *par);
 
 	void SaveHistogram();
+	void ExportRoot(std::string outputName);
 
 private:
 
+	std::vector< std::shared_ptr< TH2F > > TH2Container;
+	std::vector< TH1D* > TH1Container;
 	std::shared_ptr< T_Hist > m_histogram;
+	bool slice;
+
+
+
+
 
 	struct HistSettings{
 		std::string x_axisTitle; //x axis title
